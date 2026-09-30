@@ -15,6 +15,9 @@ from nexus_r.analysis.rules.sudo_dangerous import SudoDangerousRule
 from nexus_r.analysis.rules.sudo_nopasswd import SudoNopasswdRule
 from nexus_r.analysis.rules.suid_gtfobins import SuidGtfobinsRule
 from nexus_r.analysis.rules.writable_sensitive import WritableSensitiveRule
+from nexus_r.analysis.rules.writable_service_binary import (
+    WritableSystemdUnitRule,
+)
 
 
 def get_rules() -> list[Rule]:
@@ -32,6 +35,7 @@ def get_rules() -> list[Rule]:
         DockerSocketRule(),
         DangerousGroupsRule(),
         SshKeysRule(),
+        WritableSystemdUnitRule(),
     ]
 
 

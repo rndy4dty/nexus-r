@@ -207,6 +207,18 @@ KNOWLEDGE: dict[str, KnowledgeEntry] = {
             "https://attack.mitre.org/techniques/T1021/004/",
         ),
     ),
+    "NEXUS-SYSD-001": KnowledgeEntry(
+        cwe=("CWE-732", "CWE-269"),
+        attack=("T1543.002",),
+        references=(
+            "https://attack.mitre.org/techniques/T1543/002/",
+            "https://cwe.mitre.org/data/definitions/732.html",
+        ),
+        notes=(
+            "Writable systemd unit executed as root allows arbitrary code "
+            "execution after daemon-reload and service restart.",
+        ),
+    ),
 }
 
 
