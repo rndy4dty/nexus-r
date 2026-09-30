@@ -50,6 +50,33 @@ def _confidence_badge(conf: str) -> str:
     return f'<span class="badge conf">{_esc(conf.upper())}</span>'
 
 
+def _render_knowledge(item: dict) -> str:
+    """Render the knowledge block (CWE / ATT&CK / notes) for an item."""
+    k = item.get("knowledge")
+    if not k:
+        return ""
+    cwe = k.get("cwe") or []
+    attack = k.get("attack") or []
+    notes = k.get("notes") or []
+
+    parts = []
+    if cwe:
+        parts.append("<b>CWE</b> " + " ".join(
+            f'<code>{_esc(c)}</code>' for c in cwe
+        ))
+    if attack:
+        parts.append("<b>ATT&CK</b> " + " ".join(
+            f'<code>{_esc(a)}</code>' for a in attack
+        ))
+    line = " &nbsp; ".join(parts)
+    note_html = ""
+    if notes:
+        note_html = "<ul>" + "".join(f"<li>{_esc(n)}</li>" for n in notes) + "</ul>"
+    if not line and not note_html:
+        return ""
+    return f'<div class="kv knowledge">{line}{note_html}</div>'
+
+
 def _html_head(title: str) -> str:
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -116,6 +143,7 @@ def _html_head(title: str) -> str:
   .ref a {{ color: #2563eb; text-decoration: none; font-size: 13px; }}
   .ref a:hover {{ text-decoration: underline; }}
   .empty {{ color: #6b7280; font-style: italic; padding: 8px 0; }}
+  .kv.knowledge code {{ background: #eef2ff; color: #3730a3; }}
   .trace {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 12px; color: #4b5563; }}
   footer {{
@@ -221,6 +249,7 @@ def _html_attack_paths(report: dict[str, Any]) -> str:
   </div>
   <h3 style="margin-top:8px">{_esc(p.get('title', ''))}</h3>
   <div class="desc">{_esc(p.get('narrative', ''))}</div>
+  {_render_knowledge(p)}
   <div class="kv">
     <b>entry</b> <code>{_esc(p.get('entry_point', '?'))}</code>
     &nbsp;&rarr;&nbsp;
@@ -270,6 +299,7 @@ def _html_findings(report: dict[str, Any]) -> str:
   </div>
   <h3 style="margin-top:8px">{_esc(f.get('title', ''))}</h3>
   <div class="desc">{_esc(f.get('description', ''))}</div>
+  {_render_knowledge(f)}
   <div class="kv"><b>evidence</b> <span class="trace">{_esc(ev_str)}</span></div>
   <details>
     <summary>Validation steps</summary>

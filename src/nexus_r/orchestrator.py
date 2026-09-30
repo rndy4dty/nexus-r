@@ -1,16 +1,18 @@
 """Scan orchestrator.
 
-V0.3 pipeline:
+V0.4 pipeline:
 
     CLI → Orchestrator → Collectors → EvidenceStore
         → RuleEngine → Findings
         → CorrelationEngine → AttackPaths
+        → Knowledge enrichment (CWE / ATT&CK)
         → JSON + HTML Report
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +26,7 @@ from nexus_r.analysis import (
 from nexus_r.collectors import get_collectors
 from nexus_r.config import ScanConfig
 from nexus_r.evidence import EvidenceStore
+from nexus_r.knowledge import enrich_report
 from nexus_r.report import write_html_report, write_json_report
 
 
@@ -82,6 +85,8 @@ class ScanOrchestrator:
             collectors_failed=collectors_failed,
         )
 
+        enrich_report(report)
+
         report_path = write_json_report(report, self.config.output_dir)
         html_report_path = write_html_report(report, self.config.output_dir)
 
@@ -106,8 +111,6 @@ class ScanOrchestrator:
         collectors_run: list[str],
         collectors_failed: list[dict[str, str]],
     ) -> dict[str, Any]:
-        from datetime import datetime, timezone
-
         return {
             "nexus_r_version": __version__,
             "generated_at": datetime.now(timezone.utc).isoformat(),
