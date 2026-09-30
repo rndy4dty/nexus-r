@@ -5,8 +5,8 @@ V0.4 pipeline:
     CLI → Orchestrator → Collectors → EvidenceStore
         → RuleEngine → Findings
         → CorrelationEngine → AttackPaths
-        → Knowledge enrichment (CWE / ATT&CK)
-        → JSON + HTML Report
+        → Knowledge enrichment
+        → JSON + HTML + SARIF Report
 """
 
 from __future__ import annotations
@@ -27,7 +27,11 @@ from nexus_r.collectors import get_collectors
 from nexus_r.config import ScanConfig
 from nexus_r.evidence import EvidenceStore
 from nexus_r.knowledge import enrich_report
-from nexus_r.report import write_html_report, write_json_report
+from nexus_r.report import (
+    write_html_report,
+    write_json_report,
+    write_sarif_report,
+)
 
 
 @dataclass(slots=True)
@@ -43,6 +47,7 @@ class ScanResult:
     attack_paths: list[AttackPath]
     report_path: Path
     html_report_path: Path
+    sarif_report_path: Path
     collectors_failed: list[dict[str, str]] = field(default_factory=list)
 
 
@@ -89,6 +94,7 @@ class ScanOrchestrator:
 
         report_path = write_json_report(report, self.config.output_dir)
         html_report_path = write_html_report(report, self.config.output_dir)
+        sarif_report_path = write_sarif_report(report, self.config.output_dir)
 
         return ScanResult(
             report=report,
@@ -100,6 +106,7 @@ class ScanOrchestrator:
             attack_paths=attack_paths,
             report_path=report_path,
             html_report_path=html_report_path,
+            sarif_report_path=sarif_report_path,
             collectors_failed=collectors_failed,
         )
 
