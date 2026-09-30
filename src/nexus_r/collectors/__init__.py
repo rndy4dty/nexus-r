@@ -5,10 +5,12 @@ from __future__ import annotations
 from nexus_r.collectors.base import BaseCollector
 from nexus_r.collectors.capabilities import CapabilitiesCollector
 from nexus_r.collectors.cron import CronCollector
+from nexus_r.collectors.environment import EnvironmentCollector
 from nexus_r.collectors.sudo import SudoCollector
 from nexus_r.collectors.suid import SuidCollector
 from nexus_r.collectors.system import SystemCollector
 from nexus_r.collectors.users import UsersCollector
+from nexus_r.collectors.writable import WritableCollector
 
 COLLECTOR_REGISTRY: dict[str, type[BaseCollector]] = {
     SystemCollector.name: SystemCollector,
@@ -17,6 +19,8 @@ COLLECTOR_REGISTRY: dict[str, type[BaseCollector]] = {
     SuidCollector.name: SuidCollector,
     CapabilitiesCollector.name: CapabilitiesCollector,
     CronCollector.name: CronCollector,
+    WritableCollector.name: WritableCollector,
+    EnvironmentCollector.name: EnvironmentCollector,
 }
 
 __all__ = [
@@ -24,10 +28,12 @@ __all__ = [
     "COLLECTOR_REGISTRY",
     "CapabilitiesCollector",
     "CronCollector",
+    "EnvironmentCollector",
     "SudoCollector",
     "SystemCollector",
     "SuidCollector",
     "UsersCollector",
+    "WritableCollector",
     "get_collectors",
 ]
 
