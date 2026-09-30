@@ -1,6 +1,6 @@
 [project]
 name = "nexus-r"
-version = "0.4.0"
+version = "0.5.0"
 description = "Evidence-Driven Linux Security Research and Privilege-Escalation Analysis Engine"
 readme = "README.md"
 requires-python = ">=3.12"

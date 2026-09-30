@@ -34,18 +34,20 @@ Legend: done / in-progress / planned
 - Planned: CVE matching per-package
 - Planned: GTFOBins integration beyond name matching
 
-## V0.5 - Reporting & CI (in progress)
+## V0.5 - Reporting & CI (partial)
 
 - JSON report (done)
+- SARIF 2.1.0 report (done)
 - HTML report (done)
 - Planned: diff mode between two reports
 - Planned: ignore-list / suppression file
 - Planned: SARIF output for CI
 
-## V0.6 - Lab & Verification (in progress)
+## V0.6 - Lab & Verification (partial)
 
 - Core vulnerable Linux scenario (done)
-- 7 expected rules detected in the lab (done)
+- 5 scenarios with automated verification (done)
+- All 5 scenarios PASS (done)
 - Planned: sudo, cron, capabilities, container-escape scenarios
 
 ## V0.7 - Extended Coverage (planned)
