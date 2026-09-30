@@ -4,6 +4,50 @@
 
 (nothing yet)
 
+## [0.7.0] - 2026-10-01
+
+### Added
+- Refreshed CVE database: 26 entries focused on 2023-2024
+  - 2023: sudoedit bypass (CVE-2023-22809), Looney Tunables
+    (CVE-2023-4911), systemctl pager (CVE-2023-26604), curl SOCKS5
+    (CVE-2023-38545), python urllib (CVE-2023-24329), OverlayFS
+    (CVE-2023-0386), nf_tables UAF (CVE-2023-32233), nftables
+    (CVE-2023-35001), HTTP/2 Rapid Reset, ...
+  - 2024: regreSSHion (CVE-2024-6387), regreSSHion privsep
+    (CVE-2024-6409), runc escape (CVE-2024-21626), xz backdoor
+    (CVE-2024-3094), less (CVE-2024-32487), nf_tables UAF
+    (CVE-2024-1086), glibc iconv (CVE-2024-2961), PHP CGI
+    (CVE-2024-4577), CUPS chain (4 CVEs), Apache HTTP/2
+    (CVE-2024-27316), ...
+- `affected_above` field: entries can now express a range,
+  not only an upper bound (used by the xz backdoor entry:
+  `5.6.0 <= v < 5.6.2`)
+- ADR-005: Version Comparison Limits
+- 5 regression tests for version comparison
+
+### Fixed
+- Epoch prefix is now stripped before comparison. This fixes a
+  false positive where `1:9.6p1-3ubuntu13.19` was treated as
+  starting with `1`, incorrectly matching CVE-2023-38408
+- `+really<version>` suffix is now honored. Ubuntu uses
+  `5.6.1+really5.4.5` to mark a deliberate downgrade, so this
+  is not affected by the xz backdoor
+
+### Changed
+- CVE database now stores severity as a string and is converted
+  to the `Severity` enum in the rule, breaking a circular import
+  between `knowledge` and `analysis`
+
+### Statistics
+- 13 collectors
+- 14 detection rules
+- 3 correlation rules
+- 26 CVE entries (2023-2024)
+- 241 unit tests
+- 5 lab scenarios (all passing)
+- 5 Architecture Decision Records
+- 4 report formats: JSON, HTML, SARIF, Markdown
+
 ## [0.6.1] - 2026-10-01
 
 ### Added
