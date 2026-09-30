@@ -1,0 +1,7 @@
+# Do not send the entire project into the build context
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/output/
+**/.git/

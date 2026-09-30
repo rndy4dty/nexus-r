@@ -1,0 +1,21 @@
+# NEXUS-R Lab — docker-compose
+#
+# Usage:
+#   cd lab
+#   docker compose build
+#   docker compose run --rm nexus-lab-core
+#
+# The build context is the project root so the image can copy the
+# NEXUS-R source and install it inside the container.
+
+services:
+  nexus-lab-core:
+    build:
+      context: ..
+      dockerfile: lab/scenarios/core/Dockerfile
+    image: nexus-lab-core:latest
+    container_name: nexus-lab-core
+    hostname: vuln-lab
+    tty: true
+    stdin_open: true
+    command: sleep infinity
