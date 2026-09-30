@@ -1,9 +1,11 @@
 """Scan orchestrator.
 
-V0.2 pipeline:
+V0.3 pipeline:
 
     CLI → Orchestrator → Collectors → EvidenceStore
-        → RuleEngine → Findings → JSON Report
+        → RuleEngine → Findings
+        → CorrelationEngine → AttackPaths
+        → JSON Report
 """
 
 from __future__ import annotations
@@ -14,7 +16,12 @@ from pathlib import Path
 from typing import Any
 
 from nexus_r import __version__
-from nexus_r.analysis import Finding, RuleEngine
+from nexus_r.analysis import (
+    AttackPath,
+    CorrelationEngine,
+    Finding,
+    RuleEngine,
+)
 from nexus_r.collectors import get_collectors
 from nexus_r.config import ScanConfig
 from nexus_r.evidence import EvidenceStore
@@ -29,6 +36,8 @@ class ScanResult:
     collector_count: int
     finding_count: int
     findings: list[Finding]
+    attack_path_count: int
+    attack_paths: list[AttackPath]
     report_path: Path
     collectors_failed: list[dict[str, str]] = field(default_factory=list)
 
@@ -58,12 +67,16 @@ class ScanOrchestrator:
                     {"name": collector.name, "error": str(exc)}
                 )
 
-        engine = RuleEngine()
-        findings = engine.evaluate(store)
+        rule_engine = RuleEngine()
+        findings = rule_engine.evaluate(store)
+
+        corr_engine = CorrelationEngine()
+        attack_paths = corr_engine.evaluate(findings, store)
 
         report = self._build_report(
             store=store,
             findings=findings,
+            attack_paths=attack_paths,
             collectors_run=collectors_run,
             collectors_failed=collectors_failed,
         )
@@ -76,6 +89,8 @@ class ScanOrchestrator:
             collector_count=len(collectors_run),
             finding_count=len(findings),
             findings=findings,
+            attack_path_count=len(attack_paths),
+            attack_paths=attack_paths,
             report_path=report_path,
             collectors_failed=collectors_failed,
         )
@@ -84,6 +99,7 @@ class ScanOrchestrator:
         self,
         store: EvidenceStore,
         findings: list[Finding],
+        attack_paths: list[AttackPath],
         collectors_run: list[str],
         collectors_failed: list[dict[str, str]],
     ) -> dict[str, Any]:
@@ -97,13 +113,22 @@ class ScanOrchestrator:
             },
             "evidence": store.to_list(),
             "findings": [f.to_json_dict() for f in findings],
+            "attack_paths": [p.to_json_dict() for p in attack_paths],
             "summary": {
                 "evidence_count": store.count(),
                 "collector_count": len(collectors_run),
                 "finding_count": len(findings),
+                "attack_path_count": len(attack_paths),
                 "evidence_by_type": self._count_by_evidence_type(store),
-                "findings_by_severity": self._count_findings(findings, "severity"),
-                "findings_by_confidence": self._count_findings(findings, "confidence"),
+                "findings_by_severity": self._count_findings(
+                    findings, "severity"
+                ),
+                "findings_by_confidence": self._count_findings(
+                    findings, "confidence"
+                ),
+                "attack_paths_by_severity": self._count_paths(
+                    attack_paths, "severity"
+                ),
             },
         }
 
@@ -120,6 +145,15 @@ class ScanOrchestrator:
         counts: dict[str, int] = {}
         for f in findings:
             value = getattr(f, attr)
+            key = value.value if hasattr(value, "value") else str(value)
+            counts[key] = counts.get(key, 0) + 1
+        return counts
+
+    @staticmethod
+    def _count_paths(paths: list[AttackPath], attr: str) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for p in paths:
+            value = getattr(p, attr)
             key = value.value if hasattr(value, "value") else str(value)
             counts[key] = counts.get(key, 0) + 1
         return counts

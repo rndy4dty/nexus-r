@@ -47,7 +47,7 @@ def scan(
     ] = DEFAULT_OUTPUT_DIR,
     fmt: Annotated[
         str,
-        typer.Option("--format", "-f", help="Report format. Only 'json' in V0.1/V0.2."),
+        typer.Option("--format", "-f", help="Report format. Only 'json' in V0.1/V0.3."),
     ] = DEFAULT_FORMAT,
     collector: Annotated[
         list[str] | None,
@@ -60,6 +60,10 @@ def scan(
     show_findings: Annotated[
         bool,
         typer.Option("--show-findings/--no-show-findings", help="Print findings to terminal."),
+    ] = True,
+    show_paths: Annotated[
+        bool,
+        typer.Option("--show-paths/--no-show-paths", help="Print attack paths to terminal."),
     ] = True,
 ) -> None:
     """Run a NEXUS-R scan against the local Linux system."""
@@ -87,6 +91,7 @@ def scan(
     typer.echo(f"Collectors run  : {result.collector_count}")
     typer.echo(f"Evidence items  : {result.evidence_count}")
     typer.echo(f"Findings        : {result.finding_count}")
+    typer.echo(f"Attack paths    : {result.attack_path_count}")
 
     if result.findings:
         counts: dict[str, int] = {}
@@ -115,6 +120,28 @@ def scan(
             if f.description:
                 typer.echo(f"    {f.description}")
             typer.echo(f"    evidence: {', '.join(f.evidence_ids) or '-'}")
+
+    if show_paths and result.attack_paths:
+        typer.echo("")
+        typer.secho(
+            "=== ATTACK PATHS ===",
+            fg=typer.colors.BRIGHT_RED,
+            bold=True,
+        )
+        for p in result.attack_paths:
+            color = SEVERITY_COLORS.get(p.severity.value, typer.colors.WHITE)
+            typer.secho(
+                f"[{p.severity.value.upper()}/{p.confidence.value.upper()}] "
+                f"{p.rule_id} - {p.title}",
+                fg=color,
+                bold=True,
+            )
+            if p.narrative:
+                typer.echo(f"    {p.narrative}")
+            typer.echo(
+                f"    entry: {p.entry_point or '?'} → target: {p.target}"
+            )
+            typer.echo(f"    findings: {', '.join(p.finding_ids) or '-'}")
 
     typer.echo("")
     typer.echo(f"Report written: {result.report_path}")
