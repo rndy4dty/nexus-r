@@ -6,6 +6,7 @@ requires human validation (ADR-001 §3.7).
 """
 
 from nexus_r.ai.analyzer import HypothesisAnalyzer
+from nexus_r.ai.backends import OllamaAnalyzer, OpenAIAnalyzer
 from nexus_r.ai.model import Hypothesis, HypothesisMode, HypothesisStatus
 from nexus_r.ai.template_analyzer import TemplateAnalyzer
 
@@ -14,5 +15,7 @@ __all__ = [
     "HypothesisAnalyzer",
     "HypothesisMode",
     "HypothesisStatus",
+    "OllamaAnalyzer",
+    "OpenAIAnalyzer",
     "TemplateAnalyzer",
 ]

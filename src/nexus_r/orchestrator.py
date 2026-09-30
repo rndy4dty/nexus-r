@@ -58,8 +58,9 @@ class ScanResult:
 class ScanOrchestrator:
     """Runs the NEXUS-R scan pipeline."""
 
-    def __init__(self, config: ScanConfig) -> None:
+    def __init__(self, config: ScanConfig, ai_backend: object | None = None) -> None:
         self.config = config
+        self.ai_backend = ai_backend
 
     def run(self) -> ScanResult:
         """Execute the scan pipeline."""
@@ -97,7 +98,7 @@ class ScanOrchestrator:
         enrich_report(report)
 
         # Hypothesis layer (offline template mode by default)
-        analyzer = HypothesisAnalyzer()
+        analyzer = HypothesisAnalyzer(backend=self.ai_backend)
         hypotheses = analyzer.analyze(report)
         report["hypotheses"] = [h.to_json_dict() for h in hypotheses]
         report["summary"]["hypothesis_count"] = len(hypotheses)

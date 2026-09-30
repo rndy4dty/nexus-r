@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 
 from nexus_r import __version__
+from nexus_r.ai.backends import OllamaAnalyzer, OpenAIAnalyzer
 from nexus_r.config import DEFAULT_FORMAT, DEFAULT_OUTPUT_DIR, ScanConfig
 from nexus_r.orchestrator import ScanOrchestrator
 
@@ -39,6 +40,33 @@ def version() -> None:
     typer.echo(f"nexus-r {__version__}")
 
 
+def _build_ai_backend(backend: str, model: str) -> object | None:
+    """Return an AI backend instance or None for template mode."""
+    if backend == "template":
+        return None
+    if backend == "ollama":
+        return OllamaAnalyzer(model=model)
+    if backend == "openai":
+        import os
+
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        if not api_key:
+            typer.secho(
+                "Warning: --ai-backend openai requires OPENAI_API_KEY; "
+                "falling back to template.",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
+            return None
+        return OpenAIAnalyzer(model=model, api_key=api_key)
+    typer.secho(
+        f"Warning: unknown --ai-backend '{backend}'; using template.",
+        fg=typer.colors.YELLOW,
+        err=True,
+    )
+    return None
+
+
 @app.command()
 def scan(
     output: Annotated[
@@ -47,7 +75,7 @@ def scan(
     ] = DEFAULT_OUTPUT_DIR,
     fmt: Annotated[
         str,
-        typer.Option("--format", "-f", help="Report format. Only 'json' in V0.1/V0.3."),
+        typer.Option("--format", "-f", help="Report format. Only 'json' in V0.1/V0.5."),
     ] = DEFAULT_FORMAT,
     collector: Annotated[
         list[str] | None,
@@ -65,6 +93,18 @@ def scan(
         bool,
         typer.Option("--show-paths/--no-show-paths", help="Print attack paths to terminal."),
     ] = True,
+    ai: Annotated[
+        bool,
+        typer.Option("--ai", help="Enable AI hypothesis layer (offline fallback if unavailable)."),
+    ] = False,
+    ai_backend: Annotated[
+        str,
+        typer.Option("--ai-backend", help="AI backend: template, ollama, openai."),
+    ] = "ollama",
+    ai_model: Annotated[
+        str,
+        typer.Option("--ai-model", help="Model name for the AI backend."),
+    ] = "llama3.2",
 ) -> None:
     """Run a NEXUS-R scan against the local Linux system."""
     if fmt != "json":
@@ -83,7 +123,15 @@ def scan(
         typer.echo(f"[nexus-r] format     = {config.output_format}")
         typer.echo(f"[nexus-r] collectors = {list(config.collectors) or 'all'}")
 
-    orchestrator = ScanOrchestrator(config=config)
+    backend = None
+    if ai:
+        backend = _build_ai_backend(ai_backend, ai_model)
+        if verbose:
+            typer.echo(
+                f"[nexus-r] ai_backend = {type(backend).__name__ if backend else 'template'}"
+            )
+
+    orchestrator = ScanOrchestrator(config=config, ai_backend=backend)
     result = orchestrator.run()
 
     typer.echo("")
@@ -135,10 +183,24 @@ def scan(
             )
             if p.narrative:
                 typer.echo(f"    {p.narrative}")
-            typer.echo(
-                f"    entry: {p.entry_point or '?'} → target: {p.target}"
-            )
+            typer.echo(f"    entry: {p.entry_point or '?'} -> target: {p.target}")
             typer.echo(f"    findings: {', '.join(p.finding_ids) or '-'}")
+
+    if result.hypotheses:
+        typer.echo("")
+        typer.secho("=== HYPOTHESES ===", fg=typer.colors.MAGENTA, bold=True)
+        for h in result.hypotheses:
+            typer.secho(
+                f"[{h.severity.value.upper()}/{h.confidence.value.upper()}] "
+                f"{h.id} - {h.title}",
+                fg=typer.colors.MAGENTA,
+                bold=True,
+            )
+            typer.echo(f"    mode    : {h.mode.value} ({h.model})")
+            typer.echo(f"    status  : {h.status.value}")
+            typer.echo(f"    findings: {', '.join(h.finding_ids) or '-'}")
+            if h.narrative:
+                typer.echo(f"    note    : {h.narrative[:120]}")
 
     typer.echo("")
     typer.echo(f"JSON report : {result.report_path}")
