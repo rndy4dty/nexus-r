@@ -2,15 +2,15 @@
 
 ## [Unreleased]
 
+(nothing yet)
+
+## [0.4.0] - 2026-10-01
+
 ### Added
 - ADR-002: Detection Coverage & Finding Model
 - ADR-003: Attack Path Model & Correlation
 - docs/roadmap.md
 - CHANGELOG.md
-
-## [0.4.0] - 2026-10-01
-
-### Added
 - Knowledge Engine: CWE + ATT&CK mapping for every rule
 - ServicesCollector (systemd services)
 - SystemdCollector (systemd unit files)
