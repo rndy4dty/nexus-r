@@ -102,3 +102,12 @@ def test_cron_path_hijack_ignores_absolute_command() -> None:
     store.add(_path_entry("env-0001", "/tmp", world=True))
     store.add(_cron_entry("cron-0001", "/etc/crontab", "* * * * * root /usr/local/bin/safe"))
     assert CronPathHijackRule().evaluate(store) == []
+
+
+def test_cron_path_hijack_skips_shell_builtins() -> None:
+    """Builtins like cd/test/echo are not resolved via PATH."""
+    store = EvidenceStore()
+    store.add(_path_entry("env-0001", "/tmp", world=True))
+    store.add(_cron_entry("cron-0001", "/etc/crontab", "17 * * * * root cd / && run-parts /etc/cron.hourly"))
+    store.add(_cron_entry("cron-0002", "/etc/crontab", "25 6 * * * root test -x /usr/sbin/anacron"))
+    assert CronPathHijackRule().evaluate(store) == []

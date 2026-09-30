@@ -9,11 +9,14 @@ Two crontab formats are handled:
 
 - system format (/etc/crontab, /etc/cron.d/*):
       m h dom mon dow USER command...
-  → command starts at index 6.
+  -> command starts at index 6.
 
 - user format (/var/spool/cron/crontabs/*):
       m h dom mon dow command...
-  → command starts at index 5.
+  -> command starts at index 5.
+
+Shell builtins (cd, test, echo, ...) are skipped because they are not
+resolved via PATH.
 """
 
 from __future__ import annotations
@@ -22,7 +25,16 @@ from nexus_r.analysis.finding import Confidence, Severity
 from nexus_r.analysis.rule import Rule, RuleResult
 from nexus_r.evidence import EvidenceStore, EvidenceType
 
-SYSTEM_CRON_DIRS = ("/etc/crontab", "/etc/cron.d/")
+# Shell builtins that do NOT get resolved via PATH
+SHELL_BUILTINS: frozenset[str] = frozenset({
+    "cd", "test", "[", "]", "echo", "exit", "export", "read", "set",
+    "shift", "unset", "eval", "exec", "local", "return", "readonly",
+    "declare", "typeset", "let", "pwd", "times", "trap", "type",
+    "ulimit", "umask", "wait", "continue", "break", ":", ".",
+    "alias", "unalias", "bg", "fg", "jobs", "kill", "suspend",
+    "getopts", "hash", "help", "history", "fc",
+    "true", "false", "{", "}", "(", ")", "||", "&&", ";",
+})
 
 
 def _extract_command(entry: str, path: str) -> str | None:
@@ -32,12 +44,10 @@ def _extract_command(entry: str, path: str) -> str | None:
         return None
 
     if path == "/etc/crontab" or path.startswith("/etc/cron.d/"):
-        # m h dom mon dow user command...
         if len(parts) < 7:
             return None
         cmd_parts = parts[6:]
     else:
-        # user crontab: m h dom mon dow command...
         cmd_parts = parts[5:]
 
     return " ".join(cmd_parts) if cmd_parts else None
@@ -52,7 +62,6 @@ class CronPathHijackRule(Rule):
     confidence = Confidence.LOW
 
     def evaluate(self, store: EvidenceStore) -> list[RuleResult]:
-        # Collect writable PATH directories from environment evidence
         writable_dirs: list[str] = []
         for ev in store.by_type(EvidenceType.OTHER):
             if ev.data.get("kind") != "path_entry":
@@ -78,12 +87,15 @@ class CronPathHijackRule(Rule):
             if not command_line:
                 continue
 
-            # Only the binary (first token) matters for PATH resolution
             binary = command_line.split()[0] if command_line.split() else ""
             if not binary:
                 continue
 
-            # Absolute path → safe, skip
+            # Skip shell builtins
+            if binary in SHELL_BUILTINS:
+                continue
+
+            # Skip absolute paths (safe)
             if binary.startswith("/"):
                 continue
 
