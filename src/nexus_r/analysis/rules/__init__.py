@@ -6,6 +6,8 @@ from nexus_r.analysis.rule import Rule
 from nexus_r.analysis.rules.capabilities_dangerous import CapabilitiesDangerousRule
 from nexus_r.analysis.rules.cron_path_hijack import CronPathHijackRule
 from nexus_r.analysis.rules.cron_writable import CronWritableRule
+from nexus_r.analysis.rules.docker_socket import DockerSocketRule
+from nexus_r.analysis.rules.kernel_outdated import KernelOutdatedRule
 from nexus_r.analysis.rules.path_writable import PathWritableRule
 from nexus_r.analysis.rules.sudo_dangerous import SudoDangerousRule
 from nexus_r.analysis.rules.sudo_nopasswd import SudoNopasswdRule
@@ -24,6 +26,8 @@ def get_rules() -> list[Rule]:
         CronPathHijackRule(),
         WritableSensitiveRule(),
         PathWritableRule(),
+        KernelOutdatedRule(),
+        DockerSocketRule(),
     ]
 
 
