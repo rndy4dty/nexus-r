@@ -5,12 +5,11 @@ V0.3 pipeline:
     CLI → Orchestrator → Collectors → EvidenceStore
         → RuleEngine → Findings
         → CorrelationEngine → AttackPaths
-        → JSON Report
+        → JSON + HTML Report
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -25,6 +24,7 @@ from nexus_r.analysis import (
 from nexus_r.collectors import get_collectors
 from nexus_r.config import ScanConfig
 from nexus_r.evidence import EvidenceStore
+from nexus_r.report import write_html_report, write_json_report
 
 
 @dataclass(slots=True)
@@ -39,6 +39,7 @@ class ScanResult:
     attack_path_count: int
     attack_paths: list[AttackPath]
     report_path: Path
+    html_report_path: Path
     collectors_failed: list[dict[str, str]] = field(default_factory=list)
 
 
@@ -81,7 +82,8 @@ class ScanOrchestrator:
             collectors_failed=collectors_failed,
         )
 
-        report_path = self._write_report(report)
+        report_path = write_json_report(report, self.config.output_dir)
+        html_report_path = write_html_report(report, self.config.output_dir)
 
         return ScanResult(
             report=report,
@@ -92,6 +94,7 @@ class ScanOrchestrator:
             attack_path_count=len(attack_paths),
             attack_paths=attack_paths,
             report_path=report_path,
+            html_report_path=html_report_path,
             collectors_failed=collectors_failed,
         )
 
@@ -103,8 +106,11 @@ class ScanOrchestrator:
         collectors_run: list[str],
         collectors_failed: list[dict[str, str]],
     ) -> dict[str, Any]:
+        from datetime import datetime, timezone
+
         return {
             "nexus_r_version": __version__,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "scan": {
                 "output_format": self.config.output_format,
                 "collectors_requested": list(self.config.collectors),
@@ -157,12 +163,3 @@ class ScanOrchestrator:
             key = value.value if hasattr(value, "value") else str(value)
             counts[key] = counts.get(key, 0) + 1
         return counts
-
-    def _write_report(self, report: dict[str, Any]) -> Path:
-        output_dir = self.config.output_dir
-        path = output_dir / "report.json"
-        path.write_text(
-            json.dumps(report, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        return path

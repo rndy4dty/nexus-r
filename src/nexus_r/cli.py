@@ -43,7 +43,7 @@ def version() -> None:
 def scan(
     output: Annotated[
         Path,
-        typer.Option("--output", "-o", help="Directory where the JSON report will be written."),
+        typer.Option("--output", "-o", help="Directory where reports will be written."),
     ] = DEFAULT_OUTPUT_DIR,
     fmt: Annotated[
         str,
@@ -123,11 +123,7 @@ def scan(
 
     if show_paths and result.attack_paths:
         typer.echo("")
-        typer.secho(
-            "=== ATTACK PATHS ===",
-            fg=typer.colors.BRIGHT_RED,
-            bold=True,
-        )
+        typer.secho("=== ATTACK PATHS ===", fg=typer.colors.BRIGHT_RED, bold=True)
         for p in result.attack_paths:
             color = SEVERITY_COLORS.get(p.severity.value, typer.colors.WHITE)
             typer.secho(
@@ -144,7 +140,8 @@ def scan(
             typer.echo(f"    findings: {', '.join(p.finding_ids) or '-'}")
 
     typer.echo("")
-    typer.echo(f"Report written: {result.report_path}")
+    typer.echo(f"JSON report: {result.report_path}")
+    typer.echo(f"HTML report: {result.html_report_path}")
 
     if result.collectors_failed:
         typer.secho("Collectors failed:", fg=typer.colors.YELLOW, err=True)
