@@ -18,6 +18,15 @@ app = typer.Typer(
     add_completion=False,
 )
 
+SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
+SEVERITY_COLORS = {
+    "critical": typer.colors.BRIGHT_RED,
+    "high": typer.colors.RED,
+    "medium": typer.colors.YELLOW,
+    "low": typer.colors.CYAN,
+    "info": typer.colors.WHITE,
+}
+
 
 @app.callback()
 def main() -> None:
@@ -34,57 +43,90 @@ def version() -> None:
 def scan(
     output: Annotated[
         Path,
-        typer.Option(
-            "--output",
-            "-o",
-            help="Directory where the JSON report will be written.",
-        ),
+        typer.Option("--output", "-o", help="Directory where the JSON report will be written."),
     ] = DEFAULT_OUTPUT_DIR,
     fmt: Annotated[
         str,
-        typer.Option(
-            "--format",
-            "-f",
-            help="Report format. Only 'json' is supported in V0.1.",
-        ),
+        typer.Option("--format", "-f", help="Report format. Only 'json' in V0.1/V0.2."),
     ] = DEFAULT_FORMAT,
+    collector: Annotated[
+        list[str] | None,
+        typer.Option("--collector", "-c", help="Run only the named collector(s). Repeatable."),
+    ] = None,
     verbose: Annotated[
         bool,
-        typer.Option(
-            "--verbose",
-            "-v",
-            help="Print progress information.",
-        ),
+        typer.Option("--verbose", "-v", help="Print progress information."),
     ] = False,
+    show_findings: Annotated[
+        bool,
+        typer.Option("--show-findings/--no-show-findings", help="Print findings to terminal."),
+    ] = True,
 ) -> None:
     """Run a NEXUS-R scan against the local Linux system."""
     if fmt != "json":
-        typer.secho(
-            f"Error: format '{fmt}' is not supported in V0.1 (only 'json').",
-            fg=typer.colors.RED,
-            err=True,
-        )
+        typer.secho(f"Error: format '{fmt}' not supported.", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=2)
 
     config = ScanConfig(
         output_dir=output,
         output_format=fmt,
+        collectors=tuple(collector) if collector else (),
         verbose=verbose,
     )
 
     if verbose:
         typer.echo(f"[nexus-r] output_dir = {config.output_dir}")
         typer.echo(f"[nexus-r] format     = {config.output_format}")
+        typer.echo(f"[nexus-r] collectors = {list(config.collectors) or 'all'}")
 
     orchestrator = ScanOrchestrator(config=config)
     result = orchestrator.run()
 
-    typer.echo(
-        f"Scan complete: {result.collector_count} collectors, "
-        f"{result.evidence_count} evidence items."
-    )
-    if verbose:
-        typer.echo(f"[nexus-r] output dir: {config.output_dir.resolve()}")
+    typer.echo("")
+    typer.secho("=== NEXUS-R SCAN SUMMARY ===", fg=typer.colors.BRIGHT_WHITE, bold=True)
+    typer.echo(f"Collectors run  : {result.collector_count}")
+    typer.echo(f"Evidence items  : {result.evidence_count}")
+    typer.echo(f"Findings        : {result.finding_count}")
+
+    if result.findings:
+        counts: dict[str, int] = {}
+        for f in result.findings:
+            counts[f.severity.value] = counts.get(f.severity.value, 0) + 1
+        typer.echo("")
+        typer.echo("Findings by severity:")
+        for sev in SEVERITY_ORDER:
+            if sev in counts:
+                typer.secho(
+                    f"  {sev:<10} {counts[sev]}",
+                    fg=SEVERITY_COLORS.get(sev, typer.colors.WHITE),
+                )
+
+    if show_findings and result.findings:
+        typer.echo("")
+        typer.secho("=== FINDINGS ===", fg=typer.colors.BRIGHT_WHITE, bold=True)
+        for f in result.findings:
+            color = SEVERITY_COLORS.get(f.severity.value, typer.colors.WHITE)
+            typer.secho(
+                f"[{f.severity.value.upper()}/{f.confidence.value.upper()}] "
+                f"{f.rule_id} - {f.title}",
+                fg=color,
+                bold=True,
+            )
+            if f.description:
+                typer.echo(f"    {f.description}")
+            typer.echo(f"    evidence: {', '.join(f.evidence_ids) or '-'}")
+
+    typer.echo("")
+    typer.echo(f"Report written: {result.report_path}")
+
+    if result.collectors_failed:
+        typer.secho("Collectors failed:", fg=typer.colors.YELLOW, err=True)
+        for item in result.collectors_failed:
+            typer.secho(
+                f"  - {item['name']}: {item['error']}",
+                fg=typer.colors.YELLOW,
+                err=True,
+            )
 
 
 if __name__ == "__main__":

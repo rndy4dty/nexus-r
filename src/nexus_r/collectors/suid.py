@@ -2,6 +2,9 @@
 
 Finds SUID and SGID binaries on the filesystem. Does not judge them -
 that is the rule engine's job (ADR-001 §3.2).
+
+Deduplicates by inode to avoid reporting the same file twice through
+symlinked paths (e.g. /bin -> /usr/bin on modern Ubuntu/Debian).
 """
 
 from __future__ import annotations
@@ -33,16 +36,13 @@ class SuidCollector(BaseCollector):
 
     def collect(self) -> list[Evidence]:
         items: list[Evidence] = []
-        seen: set[str] = set()
+        seen_inodes: set[tuple[int, int]] = set()
 
         for root in SEARCH_ROOTS:
             if not Path(root).exists():
                 continue
             for path in self._walk(root):
-                if path in seen:
-                    continue
-                seen.add(path)
-                ev = self._inspect(path)
+                ev = self._inspect(path, seen_inodes)
                 if ev is not None:
                     items.append(ev)
 
@@ -53,7 +53,9 @@ class SuidCollector(BaseCollector):
             for name in filenames:
                 yield os.path.join(dirpath, name)
 
-    def _inspect(self, path: str) -> Evidence | None:
+    def _inspect(
+        self, path: str, seen_inodes: set[tuple[int, int]]
+    ) -> Evidence | None:
         try:
             st = os.stat(path, follow_symlinks=False)
         except (OSError, PermissionError):
@@ -65,6 +67,18 @@ class SuidCollector(BaseCollector):
 
         if not (is_suid or is_sgid):
             return None
+
+        # Deduplicate by (device, inode)
+        key = (st.st_dev, st.st_ino)
+        if key in seen_inodes:
+            return None
+        seen_inodes.add(key)
+
+        # Resolve real path for a canonical location
+        try:
+            real_path = str(Path(path).resolve(strict=False))
+        except OSError:
+            real_path = path
 
         if is_suid:
             ev_type = EvidenceType.SUID
@@ -81,10 +95,13 @@ class SuidCollector(BaseCollector):
             source=self.name,
             data={
                 "path": path,
+                "real_path": real_path,
                 "mode": oct(mode & 0o7777),
                 "owner_uid": st.st_uid,
                 "group_gid": st.st_gid,
                 "size": st.st_size,
+                "inode": st.st_ino,
+                "device": st.st_dev,
             },
             tags=tags,
         )
