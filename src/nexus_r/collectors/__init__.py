@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from nexus_r.collectors.base import BaseCollector
+from nexus_r.collectors.sudo import SudoCollector
 from nexus_r.collectors.suid import SuidCollector
 from nexus_r.collectors.system import SystemCollector
 from nexus_r.collectors.users import UsersCollector
@@ -10,12 +11,14 @@ from nexus_r.collectors.users import UsersCollector
 COLLECTOR_REGISTRY: dict[str, type[BaseCollector]] = {
     SystemCollector.name: SystemCollector,
     UsersCollector.name: UsersCollector,
+    SudoCollector.name: SudoCollector,
     SuidCollector.name: SuidCollector,
 }
 
 __all__ = [
     "BaseCollector",
     "COLLECTOR_REGISTRY",
+    "SudoCollector",
     "SystemCollector",
     "SuidCollector",
     "UsersCollector",
