@@ -1,6 +1,9 @@
 """Docker information collector.
 
 Detects the Docker socket and whether we are running inside a container.
+
+Sockets are deduplicated by (device, inode) so that symlinked paths
+(e.g. /var/run -> /run) do not produce duplicate evidence.
 """
 
 from __future__ import annotations
@@ -25,15 +28,20 @@ class DockerCollector(BaseCollector):
 
     def collect(self) -> list[Evidence]:
         items: list[Evidence] = []
+        seen_inodes: set[tuple[int, int]] = set()
 
         for raw in DOCKER_SOCKETS:
             path = Path(raw)
-            if not path.exists():
-                continue
             try:
                 st = path.stat()
             except (OSError, PermissionError):
                 continue
+
+            key = (st.st_dev, st.st_ino)
+            if key in seen_inodes:
+                continue
+            seen_inodes.add(key)
+
             items.append(
                 Evidence(
                     id=self._next_id("dkr"),
@@ -46,6 +54,8 @@ class DockerCollector(BaseCollector):
                         "owner_uid": st.st_uid,
                         "group_gid": st.st_gid,
                         "world_writable": bool(st.st_mode & 0o002),
+                        "inode": st.st_ino,
+                        "device": st.st_dev,
                     },
                     tags=("docker", "socket"),
                 )
