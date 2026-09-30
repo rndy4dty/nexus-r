@@ -34,14 +34,15 @@ Legend: done / in-progress / planned
 - Planned: CVE matching per-package
 - Planned: GTFOBins integration beyond name matching
 
-## V0.5 - Reporting & CI (partial)
+## V0.5 - Reporting & CI + AI Hypothesis Layer (done)
 
 - JSON report (done)
 - SARIF 2.1.0 report (done)
 - HTML report (done)
+- AI hypothesis layer (template / ollama / openai) (done)
 - Planned: diff mode between two reports
 - Planned: ignore-list / suppression file
-- Planned: SARIF output for CI
+- SARIF output for CI (done)
 
 ## V0.6 - Lab & Verification (partial)
 

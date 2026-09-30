@@ -4,6 +4,40 @@
 
 (nothing yet)
 
+## [0.6.0] - 2026-10-01
+
+### Added
+- AI hypothesis layer (src/nexus_r/ai/)
+  - Hypothesis model with mode, status, finding_ids, validation_steps
+  - TemplateAnalyzer: offline, deterministic, always available
+  - OllamaAnalyzer: HTTP to a local Ollama server
+  - OpenAIAnalyzer: HTTP to any OpenAI-compatible API
+  - HypothesisAnalyzer: automatic fallback to template on error
+    or empty response
+- ADR-004: AI Hypothesis Layer
+- CLI flags: --ai, --ai-backend (template|ollama|openai), --ai-model
+- Report gains a hypotheses list; CLI prints a HYPOTHESES section
+
+### Changed
+- Orchestrator accepts an ai_backend; default remains offline template
+- Report summary gains hypothesis_count
+
+### Safety (ADR-004)
+- Hypotheses never substitute for findings
+- Every hypothesis references at least one existing finding
+- Every hypothesis has status needs_review
+- AI backend has no filesystem / evidence / collector access
+- Prompt safety is enforced by the parser, not by trusting the LLM
+- Fallback to template mode is automatic when the AI is offline
+
+### Statistics
+- 13 collectors
+- 14 detection rules
+- 3 correlation rules
+- 226 unit tests
+- 5 lab scenarios (all passing)
+- 4 Architecture Decision Records
+
 ## [0.5.0] - 2026-10-01
 
 ### Added

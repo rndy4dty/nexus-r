@@ -251,3 +251,25 @@ The project prioritizes:
 - Modular architecture
 - Reproducibility
 - Security research quality
+
+## AI Hypothesis Layer (V0.5.5)
+
+NEXUS-R mendukung lapisan AI hipotesis yang bersifat **opsional**.
+Lapisan AI **tidak pernah** membuat finding baru - ia hanya memberi
+hipotesis dan langkah validasi atas finding yang sudah ada. Setiap
+hipotesis berstatus `needs_review`. Lihat
+[ADR-004](docs/adr/ADR-004-ai-hypothesis-layer.md).
+
+Tiga mode backend:
+
+    # Template offline (default, deterministik, tanpa network)
+    uv run nexus-r scan
+
+    # Ollama lokal (butuh ollama serve + model)
+    uv run nexus-r scan --ai --ai-backend ollama --ai-model llama3.2
+
+    # OpenAI-compatible API (butuh OPENAI_API_KEY)
+    uv run nexus-r scan --ai --ai-backend openai --ai-model gpt-4o-mini
+
+Semua hipotesis selalu mereferensi finding yang ada, dan selalu
+membutuhkan validasi manusia (ADR-001 paragraf 3.7).
