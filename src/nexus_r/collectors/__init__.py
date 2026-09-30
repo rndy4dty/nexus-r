@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from nexus_r.collectors.base import BaseCollector
 from nexus_r.collectors.capabilities import CapabilitiesCollector
+from nexus_r.collectors.cron import CronCollector
 from nexus_r.collectors.sudo import SudoCollector
 from nexus_r.collectors.suid import SuidCollector
 from nexus_r.collectors.system import SystemCollector
@@ -15,12 +16,14 @@ COLLECTOR_REGISTRY: dict[str, type[BaseCollector]] = {
     SudoCollector.name: SudoCollector,
     SuidCollector.name: SuidCollector,
     CapabilitiesCollector.name: CapabilitiesCollector,
+    CronCollector.name: CronCollector,
 }
 
 __all__ = [
     "BaseCollector",
     "COLLECTOR_REGISTRY",
     "CapabilitiesCollector",
+    "CronCollector",
     "SudoCollector",
     "SystemCollector",
     "SuidCollector",
