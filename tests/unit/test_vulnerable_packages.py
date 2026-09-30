@@ -91,3 +91,36 @@ def test_database_has_2023_and_2024() -> None:
     years = {e.cve.split("-")[1] for e in VULNERABLE_PACKAGES}
     assert "2023" in years
     assert "2024" in years
+
+
+def test_epoch_prefix_is_stripped() -> None:
+    """Ubuntu/Debian epoch prefix must not confuse comparison."""
+    # "1:9.6p1..." must be treated as "9.6p1..."
+    assert _compare_versions("1:9.6p1", "9.8p1") < 0
+    assert _compare_versions("1:9.6p1", "9.3p2") > 0
+
+
+def test_really_suffix_is_downgrade() -> None:
+    """Ubuntu uses +really to mark a deliberate downgrade."""
+    # "5.6.1+really5.4.5" must be treated as "5.4.5"
+    assert _compare_versions("5.6.1+really5.4.5", "5.6.2") < 0
+    assert _compare_versions("5.6.1+really5.4.5", "5.6.1") < 0
+
+
+def test_openssh_client_96p1_not_affected_by_ssh_agent_cve() -> None:
+    """9.6p1 is above the affected_below (9.3p2), so must not match."""
+    matches = find_vulnerable("openssh-client", "1:9.6p1-3ubuntu13.19")
+    assert matches == []
+
+
+def test_xz_backdoor_5_4_5_not_affected() -> None:
+    """xz 5.4.5 (or 5.6.1+really5.4.5) is not affected by the backdoor."""
+    assert find_vulnerable("xz-utils", "5.4.5") == []
+    assert find_vulnerable("xz-utils", "5.6.1+really5.4.5") == []
+
+
+def test_xz_backdoor_5_6_1_is_affected() -> None:
+    """xz 5.6.1 is the actual affected version."""
+    matches = find_vulnerable("xz-utils", "5.6.1")
+    cves = {m.cve for m in matches}
+    assert "CVE-2024-3094" in cves

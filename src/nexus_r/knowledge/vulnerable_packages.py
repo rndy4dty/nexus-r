@@ -33,6 +33,7 @@ class VulnerablePackageEntry:
     severity: str  # one of: critical, high, medium, low, info
     description: str
     references: tuple[str, ...] = ()
+    affected_above: str = ""  # optional; if set, version must be >= this
 
 
 VULNERABLE_PACKAGES: tuple[VulnerablePackageEntry, ...] = (
@@ -224,6 +225,7 @@ VULNERABLE_PACKAGES: tuple[VulnerablePackageEntry, ...] = (
     ),
     VulnerablePackageEntry(
         package="xz-utils",
+        affected_above="5.6.0",
         affected_below="5.6.2",
         cve="CVE-2024-3094",
         nickname="xz backdoor",
@@ -358,7 +360,32 @@ VULNERABLE_PACKAGES: tuple[VulnerablePackageEntry, ...] = (
 )
 
 
+def _normalize_version(v: str) -> str:
+    """Normalize a Debian version string for best-effort comparison.
+
+    Handles two Ubuntu-specific conventions:
+
+    - Epoch prefix: ``1:9.6p1-3ubuntu13.19`` -> ``9.6p1-3ubuntu13.19``
+    - really suffix: ``5.6.1+really5.4.5`` -> ``5.4.5``
+      (Ubuntu uses ``+really`` to mark a deliberate downgrade so that
+      apt considers it newer than the plain downgraded version.)
+    """
+    v = v.strip()
+
+    # Drop epoch prefix: "1:9.6p1..." -> "9.6p1..."
+    if ":" in v:
+        _, _, v = v.partition(":")
+
+    # Handle +really<version>: keep only the "really" part
+    if "+really" in v:
+        _, _, v = v.partition("+really")
+        v = v.strip()
+
+    return v
+
+
 def _split_version(v: str) -> list[tuple[int, object]]:
+    v = _normalize_version(v)
     tokens = re.findall(r"\d+|[A-Za-z]+", v)
     out: list[tuple[int, object]] = []
     for t in tokens:
@@ -382,9 +409,21 @@ def _compare_versions(a: str, b: str) -> int:
     return 0
 
 
-def is_affected(version: str, affected_below: str) -> bool:
-    """True if version is strictly below affected_below."""
-    return _compare_versions(version, affected_below) < 0
+def is_affected(
+    version: str,
+    affected_below: str,
+    affected_above: str = "",
+) -> bool:
+    """True if version is in the affected range.
+
+    Range is [affected_above, affected_below), where affected_above is
+    optional. If affected_above is empty, the range is (-inf, affected_below).
+    """
+    if _compare_versions(version, affected_below) >= 0:
+        return False
+    if affected_above and _compare_versions(version, affected_above) < 0:
+        return False
+    return True
 
 
 def find_vulnerable(name: str, version: str) -> list[VulnerablePackageEntry]:
@@ -392,5 +431,6 @@ def find_vulnerable(name: str, version: str) -> list[VulnerablePackageEntry]:
     return [
         e
         for e in VULNERABLE_PACKAGES
-        if e.package == name and is_affected(version, e.affected_below)
+        if e.package == name
+        and is_affected(version, e.affected_below, e.affected_above)
     ]
