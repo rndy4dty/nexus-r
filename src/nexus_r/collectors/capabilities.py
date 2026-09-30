@@ -3,6 +3,15 @@
 Uses `getcap` if available; also inspects running processes via
 /proc/<pid>/status. Read-only. Does not judge - that is the rule
 engine's job (ADR-001 §3.2).
+
+`getcap -r` output format:
+
+    <path> <cap1>[,<cap2>...]=<flags>
+
+Example:
+
+    /usr/local/bin/py-helper cap_setuid=ep
+    /usr/bin/ping cap_net_raw=ep
 """
 
 from __future__ import annotations
@@ -15,7 +24,6 @@ from nexus_r.utils.shell import run_command
 
 SEARCH_ROOTS = ["/usr", "/bin", "/sbin", "/opt", "/usr/local"]
 
-# Bit masks for CapEff parsing (see capabilities(7))
 CAP_BITS = {
     "cap_chown": 0,
     "cap_dac_override": 1,
@@ -53,16 +61,35 @@ CAP_BITS = {
 
 
 def _decode_cap_hex(cap_hex: str) -> list[str]:
-    """Decode CapEff hex string to list of capability names."""
+    """Decode CapEff hex string to a list of capability names."""
     try:
         value = int(cap_hex, 16)
     except ValueError:
         return []
-    names: list[str] = []
-    for name, bit in CAP_BITS.items():
-        if value & (1 << bit):
-            names.append(name)
-    return names
+    return [name for name, bit in CAP_BITS.items() if value & (1 << bit)]
+
+
+def _parse_getcap_line(line: str) -> tuple[str, str] | None:
+    """Parse a single getcap output line.
+
+    Returns (path, cap_string) or None if the line is malformed.
+
+    Example:
+        "/usr/local/bin/py-helper cap_setuid=ep"
+        -> ("/usr/local/bin/py-helper", "cap_setuid=ep")
+    """
+    line = line.strip()
+    if not line or "=" not in line:
+        return None
+    # Split on the *last* whitespace: everything before is the path,
+    # everything after is "<caps>=<flags>".
+    parts = line.rsplit(maxsplit=1)
+    if len(parts) != 2:
+        return None
+    path, caps = parts
+    if "=" not in caps:
+        return None
+    return path.strip(), caps.strip()
 
 
 class CapabilitiesCollector(BaseCollector):
@@ -85,6 +112,8 @@ class CapabilitiesCollector(BaseCollector):
         if probe.returncode == 127:
             return items
 
+        seen_paths: set[str] = set()
+
         for root in SEARCH_ROOTS:
             if not Path(root).exists():
                 continue
@@ -95,19 +124,23 @@ class CapabilitiesCollector(BaseCollector):
             )
             if not result.ok:
                 continue
-            for line in result.stdout.splitlines():
-                line = line.strip()
-                if not line or "=" not in line:
+            for raw_line in result.stdout.splitlines():
+                parsed = _parse_getcap_line(raw_line)
+                if parsed is None:
                     continue
-                path, _, caps = line.partition("=")
+                path, caps = parsed
+                if path in seen_paths:
+                    continue
+                seen_paths.add(path)
+
                 items.append(
                     Evidence(
                         id=self._next_id("cap"),
                         type=EvidenceType.CAPABILITY,
                         source=self.name,
                         data={
-                            "path": path.strip(),
-                            "capabilities": caps.strip(),
+                            "path": path,
+                            "capabilities": caps,
                             "kind": "file",
                         },
                         tags=("capability", "file"),

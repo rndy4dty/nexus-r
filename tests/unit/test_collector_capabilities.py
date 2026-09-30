@@ -45,3 +45,39 @@ def test_decode_cap_hex_sys_admin() -> None:
 
 def test_decode_cap_hex_invalid() -> None:
     assert _decode_cap_hex("not-a-hex") == []
+
+
+def test_parse_getcap_line_basic() -> None:
+    from nexus_r.collectors.capabilities import _parse_getcap_line
+
+    assert _parse_getcap_line("/usr/local/bin/py-helper cap_setuid=ep") == (
+        "/usr/local/bin/py-helper",
+        "cap_setuid=ep",
+    )
+
+
+def test_parse_getcap_line_multiple_caps() -> None:
+    from nexus_r.collectors.capabilities import _parse_getcap_line
+
+    assert _parse_getcap_line("/usr/bin/foo cap_setuid,cap_setgid=ep") == (
+        "/usr/bin/foo",
+        "cap_setuid,cap_setgid=ep",
+    )
+
+
+def test_parse_getcap_line_invalid() -> None:
+    from nexus_r.collectors.capabilities import _parse_getcap_line
+
+    assert _parse_getcap_line("") is None
+    assert _parse_getcap_line("no equals sign here") is None
+    assert _parse_getcap_line("only-one-token") is None
+
+
+def test_parse_getcap_line_path_with_spaces() -> None:
+    from nexus_r.collectors.capabilities import _parse_getcap_line
+
+    # rsplit on last whitespace handles paths with spaces correctly
+    assert _parse_getcap_line("/opt/my dir/bin/tool cap_setuid=ep") == (
+        "/opt/my dir/bin/tool",
+        "cap_setuid=ep",
+    )
