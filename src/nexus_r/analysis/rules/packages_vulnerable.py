@@ -38,7 +38,7 @@ class PackagesVulnerableRule(Rule):
                             f"{entry.cve}. {entry.description}"
                         ),
                         category="vulnerable-package",
-                        severity=entry.severity,
+                        severity=Severity(entry.severity),
                         confidence=Confidence.MEDIUM,
                         evidence_ids=[ev.id],
                         validation_steps=[
