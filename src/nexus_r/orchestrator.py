@@ -32,6 +32,7 @@ from nexus_r.knowledge import enrich_report
 from nexus_r.report import (
     write_html_report,
     write_json_report,
+    write_markdown_report,
     write_sarif_report,
 )
 
@@ -52,6 +53,7 @@ class ScanResult:
     report_path: Path
     html_report_path: Path
     sarif_report_path: Path
+    markdown_report_path: Path
     collectors_failed: list[dict[str, str]] = field(default_factory=list)
 
 
@@ -106,6 +108,7 @@ class ScanOrchestrator:
         report_path = write_json_report(report, self.config.output_dir)
         html_report_path = write_html_report(report, self.config.output_dir)
         sarif_report_path = write_sarif_report(report, self.config.output_dir)
+        markdown_report_path = write_markdown_report(report, self.config.output_dir)
 
         return ScanResult(
             report=report,
@@ -120,6 +123,7 @@ class ScanOrchestrator:
             report_path=report_path,
             html_report_path=html_report_path,
             sarif_report_path=sarif_report_path,
+            markdown_report_path=markdown_report_path,
             collectors_failed=collectors_failed,
         )
 

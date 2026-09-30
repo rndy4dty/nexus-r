@@ -206,6 +206,7 @@ def scan(
     typer.echo(f"JSON report : {result.report_path}")
     typer.echo(f"HTML report : {result.html_report_path}")
     typer.echo(f"SARIF report: {result.sarif_report_path}")
+    typer.echo(f"MD report   : {result.markdown_report_path}")
 
     if result.collectors_failed:
         typer.secho("Collectors failed:", fg=typer.colors.YELLOW, err=True)
