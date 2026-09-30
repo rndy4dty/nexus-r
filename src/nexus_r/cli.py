@@ -92,6 +92,7 @@ def scan(
     typer.echo(f"Evidence items  : {result.evidence_count}")
     typer.echo(f"Findings        : {result.finding_count}")
     typer.echo(f"Attack paths    : {result.attack_path_count}")
+    typer.echo(f"Hypotheses      : {result.hypothesis_count}")
 
     if result.findings:
         counts: dict[str, int] = {}

@@ -1,11 +1,12 @@
 """Scan orchestrator.
 
-V0.4 pipeline:
+V0.5 pipeline:
 
     CLI → Orchestrator → Collectors → EvidenceStore
         → RuleEngine → Findings
         → CorrelationEngine → AttackPaths
         → Knowledge enrichment
+        → Hypothesis layer (template mode by default)
         → JSON + HTML + SARIF Report
 """
 
@@ -17,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from nexus_r import __version__
+from nexus_r.ai import Hypothesis, HypothesisAnalyzer
 from nexus_r.analysis import (
     AttackPath,
     CorrelationEngine,
@@ -45,6 +47,8 @@ class ScanResult:
     findings: list[Finding]
     attack_path_count: int
     attack_paths: list[AttackPath]
+    hypothesis_count: int
+    hypotheses: list[Hypothesis]
     report_path: Path
     html_report_path: Path
     sarif_report_path: Path
@@ -92,6 +96,12 @@ class ScanOrchestrator:
 
         enrich_report(report)
 
+        # Hypothesis layer (offline template mode by default)
+        analyzer = HypothesisAnalyzer()
+        hypotheses = analyzer.analyze(report)
+        report["hypotheses"] = [h.to_json_dict() for h in hypotheses]
+        report["summary"]["hypothesis_count"] = len(hypotheses)
+
         report_path = write_json_report(report, self.config.output_dir)
         html_report_path = write_html_report(report, self.config.output_dir)
         sarif_report_path = write_sarif_report(report, self.config.output_dir)
@@ -104,6 +114,8 @@ class ScanOrchestrator:
             findings=findings,
             attack_path_count=len(attack_paths),
             attack_paths=attack_paths,
+            hypothesis_count=len(hypotheses),
+            hypotheses=hypotheses,
             report_path=report_path,
             html_report_path=html_report_path,
             sarif_report_path=sarif_report_path,
@@ -130,11 +142,13 @@ class ScanOrchestrator:
             "evidence": store.to_list(),
             "findings": [f.to_json_dict() for f in findings],
             "attack_paths": [p.to_json_dict() for p in attack_paths],
+            "hypotheses": [],
             "summary": {
                 "evidence_count": store.count(),
                 "collector_count": len(collectors_run),
                 "finding_count": len(findings),
                 "attack_path_count": len(attack_paths),
+                "hypothesis_count": 0,
                 "evidence_by_type": self._count_by_evidence_type(store),
                 "findings_by_severity": self._count_findings(
                     findings, "severity"
