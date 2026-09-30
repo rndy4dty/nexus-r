@@ -42,3 +42,5 @@ output/
 
 
 # Keep folder structure
+!output/.gitkeep
+!lab/.gitkeep
