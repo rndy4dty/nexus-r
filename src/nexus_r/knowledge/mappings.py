@@ -219,6 +219,19 @@ KNOWLEDGE: dict[str, KnowledgeEntry] = {
             "execution after daemon-reload and service restart.",
         ),
     ),
+    "NEXUS-PKG-001": KnowledgeEntry(
+        cwe=("CWE-937", "CWE-1104"),
+        attack=("T1068", "T1203"),
+        references=(
+            "https://cwe.mitre.org/data/definitions/937.html",
+            "https://attack.mitre.org/techniques/T1068/",
+            "https://www.cve.org",
+        ),
+        notes=(
+            "Curated CVE hints only. Cross-reference with the distribution "
+            "advisory before testing. Version matching is best-effort.",
+        ),
+    ),
 }
 
 

@@ -8,6 +8,7 @@ from nexus_r.collectors.cron import CronCollector
 from nexus_r.collectors.docker import DockerCollector
 from nexus_r.collectors.environment import EnvironmentCollector
 from nexus_r.collectors.kernel import KernelCollector
+from nexus_r.collectors.packages import PackagesCollector
 from nexus_r.collectors.services import ServicesCollector
 from nexus_r.collectors.sudo import SudoCollector
 from nexus_r.collectors.suid import SuidCollector
@@ -29,6 +30,7 @@ COLLECTOR_REGISTRY: dict[str, type[BaseCollector]] = {
     DockerCollector.name: DockerCollector,
     ServicesCollector.name: ServicesCollector,
     SystemdCollector.name: SystemdCollector,
+    PackagesCollector.name: PackagesCollector,
 }
 
 __all__ = [

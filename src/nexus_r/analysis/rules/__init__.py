@@ -9,6 +9,7 @@ from nexus_r.analysis.rules.cron_writable import CronWritableRule
 from nexus_r.analysis.rules.dangerous_groups import DangerousGroupsRule
 from nexus_r.analysis.rules.docker_socket import DockerSocketRule
 from nexus_r.analysis.rules.kernel_outdated import KernelOutdatedRule
+from nexus_r.analysis.rules.packages_vulnerable import PackagesVulnerableRule
 from nexus_r.analysis.rules.path_writable import PathWritableRule
 from nexus_r.analysis.rules.ssh_keys import SshKeysRule
 from nexus_r.analysis.rules.sudo_dangerous import SudoDangerousRule
@@ -36,6 +37,7 @@ def get_rules() -> list[Rule]:
         DangerousGroupsRule(),
         SshKeysRule(),
         WritableSystemdUnitRule(),
+        PackagesVulnerableRule(),
     ]
 
 
