@@ -1,0 +1,8 @@
+{
+  "name": "capabilities-only",
+  "description": "Dangerous file capabilities on custom binaries",
+  "expected_rules": [
+    "NEXUS-CAP-001"
+  ],
+  "expected_paths": []
+}

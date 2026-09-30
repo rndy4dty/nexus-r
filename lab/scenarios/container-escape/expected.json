@@ -1,0 +1,11 @@
+{
+  "name": "container-escape",
+  "description": "User in docker group with docker socket present",
+  "expected_rules": [
+    "NEXUS-GROUP-001",
+    "NEXUS-DOCKER-001"
+  ],
+  "expected_paths": [
+    "NEXUS-CORR-DOCKER-001"
+  ]
+}

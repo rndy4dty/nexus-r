@@ -1,0 +1,9 @@
+{
+  "name": "sudo-only",
+  "description": "Only sudo NOPASSWD and dangerous-binary entries",
+  "expected_rules": [
+    "NEXUS-SUDO-001",
+    "NEXUS-SUDO-002"
+  ],
+  "expected_paths": []
+}

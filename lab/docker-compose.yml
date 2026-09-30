@@ -1,11 +1,6 @@
-# NEXUS-R Lab — docker-compose
+# NEXUS-R Lab - docker-compose
 #
-# Usage:
-#   cd lab
-#   docker compose build
-#   docker compose run --rm nexus-lab-core
-#
-# The build context is the project root so the image can copy the
+# Build context is the project root (..) so each scenario can copy the
 # NEXUS-R source and install it inside the container.
 
 services:
@@ -15,7 +10,51 @@ services:
       dockerfile: lab/scenarios/core/Dockerfile
     image: nexus-lab-core:latest
     container_name: nexus-lab-core
-    hostname: vuln-lab
+    hostname: vuln-lab-core
+    tty: true
+    stdin_open: true
+    command: sleep infinity
+
+  nexus-lab-sudo:
+    build:
+      context: ..
+      dockerfile: lab/scenarios/sudo-only/Dockerfile
+    image: nexus-lab-sudo:latest
+    container_name: nexus-lab-sudo
+    hostname: vuln-lab-sudo
+    tty: true
+    stdin_open: true
+    command: sleep infinity
+
+  nexus-lab-cron:
+    build:
+      context: ..
+      dockerfile: lab/scenarios/cron-only/Dockerfile
+    image: nexus-lab-cron:latest
+    container_name: nexus-lab-cron
+    hostname: vuln-lab-cron
+    tty: true
+    stdin_open: true
+    command: sleep infinity
+
+  nexus-lab-caps:
+    build:
+      context: ..
+      dockerfile: lab/scenarios/capabilities-only/Dockerfile
+    image: nexus-lab-caps:latest
+    container_name: nexus-lab-caps
+    hostname: vuln-lab-caps
+    tty: true
+    stdin_open: true
+    command: sleep infinity
+
+  nexus-lab-container:
+    build:
+      context: ..
+      dockerfile: lab/scenarios/container-escape/Dockerfile
+    image: nexus-lab-container:latest
+    container_name: nexus-lab-container
+    hostname: vuln-lab-container
     tty: true
     stdin_open: true
     command: sleep infinity

@@ -1,0 +1,9 @@
+{
+  "name": "cron-only",
+  "description": "Writable cron script and writable directory in PATH",
+  "expected_rules": [
+    "NEXUS-CRON-001",
+    "NEXUS-PATH-001"
+  ],
+  "expected_paths": []
+}

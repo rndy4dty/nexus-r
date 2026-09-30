@@ -92,3 +92,24 @@ Untuk menghapus image lokal:
 Lab ini dibuat khusus untuk pengujian keamanan terisolasi.
 
 Jangan menjalankan image ini pada production, mengekspos container ke jaringan publik, menggunakan credential atau private key asli, atau memasukkan data sensitif ke dalam lab.
+
+## Skenario
+
+Lab ini berisi beberapa skenario terisolasi, masing-masing fokus pada
+subset rule tertentu. Setiap skenario memiliki `expected.json` yang
+mendefinisikan rule yang diharapkan terdeteksi.
+
+| Skenario | Service | Fokus | Rules yang diharapkan |
+|---|---|---|---|
+| `core` | `nexus-lab-core` | Mixed vulnerabilities | SUDO-001, SUDO-002, SUID-001, CRON-001, CAP-001, PATH-001, SSH-001 |
+| `sudo-only` | `nexus-lab-sudo` | Hanya sudo misconfiguration | SUDO-001, SUDO-002 |
+| `cron-only` | `nexus-lab-cron` | Hanya cron + PATH | CRON-001, PATH-001 |
+| `capabilities-only` | `nexus-lab-caps` | Hanya file capabilities | CAP-001 |
+| `container-escape` | `nexus-lab-container` | Docker group + socket | GROUP-001, DOCKER-001, CORR-DOCKER-001 |
+
+### Verifikasi semua skenario
+
+Jalankan dari root project:
+
+    cd lab
+    ./verify-all.sh

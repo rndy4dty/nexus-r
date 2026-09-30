@@ -1,0 +1,14 @@
+{
+  "name": "core",
+  "description": "Mixed vulnerabilities: sudo, suid, cron, capabilities, ssh, path",
+  "expected_rules": [
+    "NEXUS-SUDO-001",
+    "NEXUS-SUDO-002",
+    "NEXUS-SUID-001",
+    "NEXUS-CRON-001",
+    "NEXUS-CAP-001",
+    "NEXUS-PATH-001",
+    "NEXUS-SSH-001"
+  ],
+  "expected_paths": []
+}
