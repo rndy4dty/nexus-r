@@ -4,6 +4,20 @@
 
 (nothing yet)
 
+## [0.6.1] - 2026-10-01
+
+### Added
+- Markdown report format (`output/report.md`)
+  - Sections: Summary, Attack Paths, Findings, Hypotheses, Disclaimer
+  - Findings sorted by severity then rule_id
+  - Knowledge (CWE / ATT&CK) inline per finding and per attack path
+  - Escapes pipes and backticks so tables stay valid
+- 9 unit tests for the Markdown builder
+
+### Changed
+- Orchestrator now writes four reports: JSON, HTML, SARIF, Markdown
+- CLI prints all four report paths
+
 ## [0.6.0] - 2026-10-01
 
 ### Added
