@@ -37,7 +37,7 @@
 
 **NEXUS-R** is an evidence-driven Linux security research engine. It collects facts from a target system, normalizes them into **structured evidence**, analyzes them through a **deterministic rule engine**, correlates findings into **attack paths**, and enriches the result with **CWE / MITRE ATT&CK** mappings plus optional **AI hypotheses** that always require human validation.
 
-NEXUS-R is **not** a LinPEAS replacement. It does not compete on the number of checks it performs. Its focus is **correlation, explainability, and reasoning** — turning a list of observations into an understandable picture of how an attacker could escalate privileges.
+NEXUS-R focuses on **correlation, explainability, and reasoning**. Rather than simply producing a list of findings, it connects individual observations and security weaknesses into an understandable picture of how an attacker could potentially escalate privileges.
 
 ### Key Characteristics
 
